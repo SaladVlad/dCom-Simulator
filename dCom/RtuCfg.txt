@@ -1,0 +1,8 @@
+STA 105
+TCP 59860
+
+
+DO_REG  1 2000  0  0      1     0  DO  @SignalZaUkljucivanje 2
+IN_REG  1 3800  0  0   4095  2000  AI  @Baterija 4
+IN_REG  2 3801  0  0   4095  2000  AI  @SenzorDaljine 4
+HR_INT  4 4000  0  0   4095  1200  AO  @NapajanjeMotora 4
