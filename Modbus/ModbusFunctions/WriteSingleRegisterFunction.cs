@@ -26,45 +26,20 @@ namespace Modbus.ModbusFunctions
         {
             ModbusWriteCommandParameters parameters = CommandParameters as ModbusWriteCommandParameters;
 
-            if (parameters == null)
-            {
-                throw new ArgumentException("Command parameters are not of type ModbusWriteCommandParameters");
-            }
-
             byte[] request = new byte[12];
 
-            // Head part (7 bytes)
-            ushort tidNetworkOrder = (ushort)IPAddress.HostToNetworkOrder((short)parameters.TransactionId);
-            ushort pidNetworkOrder = (ushort)IPAddress.HostToNetworkOrder((short)parameters.ProtocolId);
-            ushort lenNetworkOrder = (ushort)IPAddress.HostToNetworkOrder((short)parameters.Length);
-
-            // Transaction ID (TID)
-            request[0] = (byte)(tidNetworkOrder >> 8); // High byte
-            request[1] = (byte)(tidNetworkOrder & 0xFF); // Low byte
-
-            // Protocol ID (PID)
-            request[2] = (byte)(pidNetworkOrder >> 8); // High byte
-            request[3] = (byte)(pidNetworkOrder & 0xFF); // Low byte
-
-            // Length (LEN)
-            request[4] = (byte)(lenNetworkOrder >> 8); // High byte
-            request[5] = (byte)(lenNetworkOrder & 0xFF); // Low byte
-
-            // Unit ID
+            request[0] = BitConverter.GetBytes(parameters.TransactionId)[1];
+            request[1] = BitConverter.GetBytes(parameters.TransactionId)[0];
+            request[2] = BitConverter.GetBytes(parameters.ProtocolId)[1];
+            request[3] = BitConverter.GetBytes(parameters.ProtocolId)[0];
+            request[4] = BitConverter.GetBytes(parameters.Length)[1];
+            request[5] = BitConverter.GetBytes(parameters.Length)[0];
             request[6] = parameters.UnitId;
-
-            // Data part (5 bytes)
             request[7] = parameters.FunctionCode;
-
-            // Start Address
-            ushort startAddressNetworkOrder = (ushort)IPAddress.HostToNetworkOrder((short)parameters.OutputAddress);
-            request[8] = (byte)(startAddressNetworkOrder >> 8); // High byte
-            request[9] = (byte)(startAddressNetworkOrder & 0xFF); // Low byte
-
-            // Quantity
-            ushort quantityNetworkOrder = (ushort)IPAddress.HostToNetworkOrder((short)parameters.Value);
-            request[10] = (byte)(quantityNetworkOrder >> 8); // High byte
-            request[11] = (byte)(quantityNetworkOrder & 0xFF); // Low byte
+            request[8] = BitConverter.GetBytes(parameters.OutputAddress)[1];
+            request[9] = BitConverter.GetBytes(parameters.OutputAddress)[0];
+            request[10] = BitConverter.GetBytes(parameters.Value)[1];
+            request[11] = BitConverter.GetBytes(parameters.Value)[0];
 
             return request;
         }
@@ -72,8 +47,14 @@ namespace Modbus.ModbusFunctions
         /// <inheritdoc />
         public override Dictionary<Tuple<PointType, ushort>, ushort> ParseResponse(byte[] response)
         {
-            //TO DO: IMPLEMENT
-            throw new NotImplementedException();
+            Dictionary<Tuple<PointType, ushort>, ushort> responseDictionary = new Dictionary<Tuple<PointType, ushort>, ushort>();
+
+            ushort outputAddress = (ushort)IPAddress.NetworkToHostOrder((short)BitConverter.ToUInt16(response, 8));
+            ushort value = (ushort)IPAddress.NetworkToHostOrder((short)BitConverter.ToUInt16(response, 10));
+
+            responseDictionary.Add(new Tuple<PointType, ushort>(PointType.ANALOG_OUTPUT, outputAddress), value);
+
+            return responseDictionary;
         }
     }
 }
